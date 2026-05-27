@@ -5,57 +5,74 @@ import json
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python GetLenovoWarranty.py <serial_number>")
+        print("Usage: python GetLenovoWarranty.py <serial_number>", file=sys.stderr)
         sys.exit(1)
 
-    serialNumber = sys.argv[1]
+    serial_number = sys.argv[1]
 
-    # Initial product lookup
-    initUrl = f"https://pcsupport.lenovo.com/au/en/api/v4/mse/getproducts?productId={serialNumber}"
-    print(f"Requesting initial machine data from: {initUrl}")
+    init_url = f"https://pcsupport.lenovo.com/au/en/api/v4/mse/getproducts?productId={serial_number}"
+    print(f"Requesting initial machine data from: {init_url}", file=sys.stderr)
 
     try:
-        initInfo = requests.get(initUrl, timeout=10).json()
+        response = requests.get(init_url, timeout=10)
+        response.raise_for_status()
+        init_info = response.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"Lenovo API returned an error: {e}", file=sys.stderr)
+        sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Failed to reach Lenovo API: {e}")
+        print(f"Failed to reach Lenovo API: {e}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError:
+        print("Lenovo API returned an unexpected response (not JSON).", file=sys.stderr)
         sys.exit(1)
 
-    if not initInfo:
-        print("No results returned from Lenovo API. Check the serial number.")
+    if not init_info:
+        print("No results returned from Lenovo API. Check the serial number.", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        product_id = init_info[0]['Id']
+        serial = init_info[0]['Serial']
+    except (KeyError, IndexError):
+        print("Unexpected response structure from Lenovo API.", file=sys.stderr)
         sys.exit(1)
 
     # Extract machine type from ID
-    # Example: LAPTOPS-AND-NETBOOKS/.../21NS/21NS00QKAU/PF60DP5X -> 21NS
-    match = re.search(r"/([A-Z0-9]+)/\1[A-Z0-9]+/", initInfo[0]['Id'])
+    # Example: LAPTOPS-AND-NETBOOKS/.../21NS/21NS00QKAU/XXXXXXXXXXXX -> 21NS
+    match = re.search(r"/([A-Z0-9]+)/\1[A-Z0-9]+/", product_id)
     if not match:
-        print("No machine type found in Id, this indicates a RegEx or data failure.")
-        print(initInfo[0]['Id'])
+        print(f"Could not parse machine type from product ID: {product_id}", file=sys.stderr)
         sys.exit(1)
 
-    machineType = match.group(1)
+    machine_type = match.group(1)
 
-    if not machineType:
-        sys.exit(1)
-
-    # Request warranty and device info
-    formatDeviceData = {
-        "serialNumber": initInfo[0]['Serial'],
-        "machineType":  machineType,
+    payload = {
+        "serialNumber": serial,
+        "machineType":  machine_type,
         "country":      "au",
         "language":     "en"
     }
 
     try:
-        deviceInfo = requests.post(
+        response = requests.post(
             "https://pcsupport.lenovo.com/au/en/api/v4/upsell/redport/getIbaseInfo",
-            json=formatDeviceData,
+            json=payload,
             timeout=10
-        ).json()
+        )
+        response.raise_for_status()
+        device_info = response.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"Warranty API returned an error: {e}", file=sys.stderr)
+        sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Failed to retrieve warranty info: {e}")
+        print(f"Failed to retrieve warranty info: {e}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError:
+        print("Warranty API returned an unexpected response (not JSON).", file=sys.stderr)
         sys.exit(1)
 
-    print(json.dumps(deviceInfo, indent=4))
+    print(json.dumps(device_info, indent=4))
 
 if __name__ == "__main__":
     main()

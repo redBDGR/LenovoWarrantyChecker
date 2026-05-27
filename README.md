@@ -30,26 +30,28 @@ python GetLenovoWarranty.py <serial_number>
 python GetLenovoWarranty.py XXXXXXXXXXXX
 ```
 
-The script prints a status line to stdout before the JSON payload:
+Status and error messages are written to `stderr`. Only the JSON payload is written to `stdout`, so the output can be piped cleanly:
 
-```
-Requesting initial machine data from: https://pcsupport.lenovo.com/au/en/api/v4/mse/getproducts?productId=XXXXXXXXXXXX
+```bash
+python GetLenovoWarranty.py XXXXXXXXXXXX | jq .
 ```
 
 The JSON response structure varies by machine and warranty type. Fields typically include device details (model, machine type, manufacture date) and one or more warranty entitlement objects.
 
 ## Error Handling
 
-The script exits with a message if:
+The script exits with a message (written to `stderr`) if:
 
 - No serial number is provided
-- The Lenovo API is unreachable or times out
+- The Lenovo API is unreachable, times out, or returns an HTTP error
+- The API returns a non-JSON response
 - No product is found for the given serial number
-- The machine type cannot be parsed from the API response
+- The API response structure is unexpected
+- The machine type cannot be parsed from the product ID
 
 ## Region
 
-Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`). To target a different region, update the `country` and `language` values in `formatDeviceData` and adjust the base URLs accordingly.
+Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`). To target a different region, update the `country` and `language` values in `payload` and adjust the base URLs accordingly.
 
 ## Disclaimer
 

@@ -24,12 +24,6 @@ pip install -r requirements.txt
 python GetLenovoWarranty.py <serial_number>
 ```
 
-**Example:**
-
-```bash
-python GetLenovoWarranty.py XXXXXXXXXXXX
-```
-
 Status and error messages are written to `stderr`. Only the JSON payload is written to `stdout`, so the output can be piped cleanly:
 
 ```bash
@@ -51,7 +45,7 @@ The script exits with a message (written to `stderr`) if:
 
 ## Region
 
-Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`). To target a different region, update the `country` and `language` values in `payload` and adjust the base URLs accordingly.
+Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`). Using this script to target different regions is currently untested. To target a different region, update the `country` and `language` values in `payload` and adjust the base URLs accordingly.
 
 ## Disclaimer
 

@@ -5,19 +5,17 @@ A Python CLI tool to retrieve warranty and device information for Lenovo machine
 ## How It Works
 
 1. Accepts a Lenovo serial number as a command-line argument
-2. Queries the Lenovo product lookup API to identify the machine type
+2. Queries the Lenovo product lookup API to identify the machine type from the serial
 3. Submits a second request to retrieve full warranty and device information
 4. Outputs the result as formatted JSON
 
 ## Requirements
 
 - Python 3.7+
-- `requests` library
-
-Install dependencies:
+- `requests` library (`requirements.txt` included)
 
 ```bash
-pip install requests
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -29,36 +27,30 @@ python GetLenovoWarranty.py <serial_number>
 **Example:**
 
 ```bash
-python GetLenovoWarranty.py PF60DP5X
+python GetLenovoWarranty.py XXXXXXXXXXXX
 ```
 
-**Example output:**
+The script prints a status line to stdout before the JSON payload:
 
-```json
-{
-    "warrantyStatus": "Active",
-    "startDate": "2024-01-15",
-    "endDate": "2027-01-15",
-    "machineType": "21NS",
-    ...
-}
 ```
+Requesting initial machine data from: https://pcsupport.lenovo.com/au/en/api/v4/mse/getproducts?productId=XXXXXXXXXXXX
+```
+
+The JSON response structure varies by machine and warranty type. Fields typically include device details (model, machine type, manufacture date) and one or more warranty entitlement objects.
 
 ## Error Handling
 
-The script will exit with a message if:
+The script exits with a message if:
 
 - No serial number is provided
-- The Lenovo API is unreachable
+- The Lenovo API is unreachable or times out
 - No product is found for the given serial number
 - The machine type cannot be parsed from the API response
 
-## Notes
+## Region
 
-- Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`)
-- To target a different region, update the `country` and `language` values in `formatDeviceData` and adjust the base URLs accordingly
-- API endpoints are unofficial and may change without notice
+Targets the Australian Lenovo Support API (`pcsupport.lenovo.com/au/en`). To target a different region, update the `country` and `language` values in `formatDeviceData` and adjust the base URLs accordingly.
 
 ## Disclaimer
 
-This tool uses undocumented Lenovo Support API endpoints. It is intended for personal or internal use only. Use at your own risk.
+This tool uses undocumented Lenovo Support API endpoints. It is intended for internal use only and is not affiliated with or endorsed by Lenovo. Use at your own risk — endpoints may change without notice.
